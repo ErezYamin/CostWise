@@ -38,6 +38,7 @@ export default function OrdersPage() {
           headers: { Authorization: `Bearer ${token}` },
         })
         const data = await res.json()
+        if (!data.items) throw new Error('Unauthorized')
         setOrders(data.items)
       } catch (err) {
         console.error(err)
