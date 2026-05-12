@@ -22,7 +22,8 @@ export function useDashboard() {
           headers: { Authorization: `Bearer ${token}` },
         });
         const json = await res.json();
-        setData(json);
+        const payload = json.body ? JSON.parse(json.body) : json;
+        setData(payload);
       } catch (e: any) {
         setError(e.message);
       } finally {
