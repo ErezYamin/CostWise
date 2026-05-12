@@ -37,7 +37,8 @@ export default function OrdersPage() {
         const res = await fetch(`${API_BASE}/orders`, {
           headers: { Authorization: `Bearer ${token}` },
         })
-        const data = await res.json()
+        const raw = await res.json()
+        const data = raw.body ? JSON.parse(raw.body) : raw
         if (!data.items) throw new Error('Unauthorized')
         setOrders(data.items)
       } catch (err) {
