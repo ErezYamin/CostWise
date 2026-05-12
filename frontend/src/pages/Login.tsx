@@ -1,4 +1,4 @@
-import { signIn } from 'aws-amplify/auth'
+import { signIn, confirmSignIn } from 'aws-amplify/auth'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DollarSign } from 'lucide-react'
@@ -6,16 +6,55 @@ import { DollarSign } from 'lucide-react'
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [needsNewPassword, setNeedsNewPassword] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
   async function handleLogin() {
     try {
-      await signIn({ username: email, password })
+      const result = await signIn({ username: email, password })
+      if (result.nextStep.signInStep === 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED') {
+        setNeedsNewPassword(true)
+        return
+      }
       navigate('/')
     } catch (err: any) {
       setError(err.message)
     }
+  }
+
+  async function handleNewPassword() {
+    try {
+      const result = await confirmSignIn({ challengeResponse: newPassword })
+      if (result.isSignedIn) {
+        navigate('/')
+      }
+    } catch (err: any) {
+      setError(err.message)
+    }
+  }
+
+  const inputStyle = {
+    padding: '12px 16px',
+    borderRadius: 10,
+    border: '1px solid #1E2F4A',
+    background: '#0D1526',
+    color: '#EFF6FF',
+    fontSize: 14,
+    outline: 'none',
+  }
+
+  const buttonStyle = {
+    padding: '13px',
+    borderRadius: 10,
+    border: 'none',
+    background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
+    color: 'white',
+    fontSize: 15,
+    fontWeight: 600,
+    cursor: 'pointer',
+    marginTop: 4,
   }
 
   return (
@@ -62,68 +101,62 @@ export default function LoginPage() {
           </span>
         </div>
 
-        {/* Subtitle */}
-        <h2 style={{ textAlign: 'center', fontFamily: 'Sora, sans-serif', fontSize: 22, fontWeight: 600, color: '#EFF6FF', margin: '0 0 6px' }}>
-          Welcome back
-        </h2>
-        <p style={{ textAlign: 'center', color: '#6B8099', fontSize: 14, margin: '0 0 36px' }}>
-          Sign in to your restaurant dashboard
-        </p>
-
-        {/* Form */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email address"
-            style={{
-              padding: '12px 16px',
-              borderRadius: 10,
-              border: '1px solid #1E2F4A',
-              background: '#0D1526',
-              color: '#EFF6FF',
-              fontSize: 14,
-              outline: 'none',
-            }}
-          />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            style={{
-              padding: '12px 16px',
-              borderRadius: 10,
-              border: '1px solid #1E2F4A',
-              background: '#0D1526',
-              color: '#EFF6FF',
-              fontSize: 14,
-              outline: 'none',
-            }}
-          />
-
-          {error && (
-            <p style={{ margin: 0, color: '#EF4444', fontSize: 13 }}>{error}</p>
-          )}
-
-          <button
-            onClick={handleLogin}
-            style={{
-              padding: '13px',
-              borderRadius: 10,
-              border: 'none',
-              background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
-              color: 'white',
-              fontSize: 15,
-              fontWeight: 600,
-              cursor: 'pointer',
-              marginTop: 4,
-            }}
-          >
-            Sign in
-          </button>
-        </div>
+        {needsNewPassword ? (
+          <>
+            <h2 style={{ textAlign: 'center', fontFamily: 'Sora, sans-serif', fontSize: 22, fontWeight: 600, color: '#EFF6FF', margin: '0 0 6px' }}>
+              Set a new password
+            </h2>
+            <p style={{ textAlign: 'center', color: '#6B8099', fontSize: 14, margin: '0 0 36px' }}>
+              Your account requires a permanent password
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="New password"
+                style={inputStyle}
+              />
+              {error && (
+                <p style={{ margin: 0, color: '#EF4444', fontSize: 13 }}>{error}</p>
+              )}
+              <button onClick={handleNewPassword} style={buttonStyle}>
+                Set password
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 style={{ textAlign: 'center', fontFamily: 'Sora, sans-serif', fontSize: 22, fontWeight: 600, color: '#EFF6FF', margin: '0 0 6px' }}>
+              Welcome back
+            </h2>
+            <p style={{ textAlign: 'center', color: '#6B8099', fontSize: 14, margin: '0 0 36px' }}>
+              Sign in to your restaurant dashboard
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email address"
+                style={inputStyle}
+              />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                style={inputStyle}
+              />
+              {error && (
+                <p style={{ margin: 0, color: '#EF4444', fontSize: 13 }}>{error}</p>
+              )}
+              <button onClick={handleLogin} style={buttonStyle}>
+                Sign in
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

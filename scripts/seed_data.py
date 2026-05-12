@@ -76,7 +76,7 @@ def seed_sales():
 
     total = 0
     with table.batch_writer() as batch:
-        for day_offset in range(90):
+        for day_offset in range(91):
             current_date = start_date + timedelta(days=day_offset)
             weekday = current_date.weekday()
             num_sales = get_daily_sales_count(weekday)

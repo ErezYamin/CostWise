@@ -5,8 +5,10 @@ import {
   BarChart2,
   MessageSquare,
   Settings,
+  LogOut,
 } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { signOut } from "aws-amplify/auth";
 import { colors } from "../styles/tokens";
 
 const navItems = [
@@ -19,6 +21,13 @@ const navItems = [
 ];
 
 export default function Sidebar() {
+  const navigate = useNavigate();
+
+  async function handleLogout() {
+    await signOut();
+    navigate("/login");
+  }
+
   return (
     <aside
       style={{
@@ -119,21 +128,30 @@ export default function Sidebar() {
           >
             II
           </div>
-          <div>
-            <p
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: colors.text,
-                margin: 0,
-              }}
-            >
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: colors.text, margin: 0 }}>
               Israel Israeli
             </p>
             <p style={{ fontSize: 11, color: "#5C7A94", margin: "2px 0 0" }}>
               Restaurant Manager
             </p>
           </div>
+          <button
+            onClick={handleLogout}
+            title="Logout"
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              color: "#5C7A94",
+              display: "flex",
+              alignItems: "center",
+              padding: 4,
+              borderRadius: 6,
+            }}
+          >
+            <LogOut size={16} />
+          </button>
         </div>
       </div>
     </aside>
