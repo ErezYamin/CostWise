@@ -140,7 +140,7 @@ def seed_forecasts():
     total = 0
 
     with table.batch_writer() as batch:
-        for day_offset in range(1, 8):  # next 7 days
+        for day_offset in range(-7, 8):  # past 7 days + next 7 days
             forecast_date = today + timedelta(days=day_offset)
             for forecast_type in FORECAST_TYPES:
                 batch.put_item(Item={
