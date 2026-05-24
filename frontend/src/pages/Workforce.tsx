@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
-import { API_BASE } from '../config'
+import { useWorkforce } from '../hooks/useWorkforce'
 import { getToken } from '../lib/auth'
+import { API_BASE } from '../config'
 
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const DAYS         = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const SHIFT_CYCLE  = ['Morning', 'Evening', 'Day Off']
 
 const SHIFT_STYLES: Record<string, string> = {
   'Morning': 'bg-blue-600 text-white',
@@ -10,57 +12,55 @@ const SHIFT_STYLES: Record<string, string> = {
   'Day Off': 'bg-gray-700 text-gray-400',
 }
 
-function ShiftChip({ value }: { value: string }) {
+function ShiftChip({ value, onClick }: { value: string; onClick: () => void }) {
   return (
-    <span className={`px-3 py-1 rounded-full text-xs font-medium ${SHIFT_STYLES[value] ?? 'bg-gray-700 text-gray-400'}`}>
+    <span
+      onClick={onClick}
+      title="Click to change shift"
+      className={`px-3 py-1 rounded-full text-xs font-medium cursor-pointer hover:opacity-75 transition-opacity select-none ${SHIFT_STYLES[value] ?? 'bg-gray-700 text-gray-400'}`}
+    >
       {value}
     </span>
   )
 }
 
-const MOCK = {
-  schedule: [
-    { staff_id: 's1', name: 'David Cohen',   role: 'Waiter',  shifts: { Sun: 'Morning', Mon: 'Day Off', Tue: 'Evening', Wed: 'Morning', Thu: 'Morning', Fri: 'Evening', Sat: 'Morning' } },
-    { staff_id: 's2', name: 'Sarah Johnson', role: 'Waiter',  shifts: { Sun: 'Evening', Mon: 'Morning', Tue: 'Day Off', Wed: 'Evening', Thu: 'Day Off', Fri: 'Morning', Sat: 'Evening' } },
-    { staff_id: 's3', name: 'Michael Zhang', role: 'Chef',    shifts: { Sun: 'Morning', Mon: 'Morning', Tue: 'Evening', Wed: 'Day Off', Thu: 'Morning', Fri: 'Morning', Sat: 'Evening' } },
-    { staff_id: 's4', name: 'Lisa Park',     role: 'Cashier', shifts: { Sun: 'Day Off', Mon: 'Evening', Tue: 'Morning', Wed: 'Morning', Thu: 'Evening', Fri: 'Day Off', Sat: 'Morning' } },
-    { staff_id: 's5', name: 'Tom Wilson',    role: 'Manager', shifts: { Sun: 'Morning', Mon: 'Morning', Tue: 'Morning', Wed: 'Morning', Thu: 'Morning', Fri: 'Day Off', Sat: 'Day Off' } },
-  ],
-  predicted_customers: { Sun: 120, Mon: 95, Tue: 140, Wed: 110, Thu: 160, Fri: 210, Sat: 195 },
-  summary: { total_shifts: 28, understaffed_days: 1, labor_cost: 4200 },
-}
-
 export default function WorkforcePage() {
-  const [data, setData]       = useState(MOCK)
-  const [approved, setApproved] = useState(false)
-  const [isLive, setIsLive]   = useState<boolean | null>(null)
   const [weekStart, setWeekStart] = useState(() => {
     const d = new Date()
     d.setDate(d.getDate() - d.getDay())
     return d.toISOString().split('T')[0]
   })
 
+  const { data, isLive } = useWorkforce(weekStart)
+
+  const [schedule, setSchedule] = useState(data.schedule)
+  const [approved, setApproved] = useState(false)
+
+  // Sync editable schedule when fetched data changes (new week or live data arrives)
   useEffect(() => {
-    setIsLive(null)
-    getToken()
-      .then(token =>
-        fetch(`${API_BASE}/workforce?week=${weekStart}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-          .then(r => r.json())
-          .then(raw => {
-            const d = raw.body ? JSON.parse(raw.body) : raw
-            if (d?.schedule && d?.predicted_customers && d?.summary) {
-              setData(d)
-              setIsLive(true)
-            } else {
-              setIsLive(false)
-            }
-          })
-          .catch(() => setIsLive(false))
-      )
-      .catch(() => setIsLive(false))
-  }, [weekStart])
+    setSchedule(data.schedule)
+    setApproved(false)
+  }, [data])
+
+  const cycleShift = (staffId: string, day: string) => {
+    setSchedule(prev => prev.map(emp => {
+      if (emp.staff_id !== staffId) return emp
+      const current = emp.shifts[day] ?? 'Day Off'
+      const nextIdx = (SHIFT_CYCLE.indexOf(current) + 1) % SHIFT_CYCLE.length
+      return { ...emp, shifts: { ...emp.shifts, [day]: SHIFT_CYCLE[nextIdx] } }
+    }))
+  }
+
+  const dayWarnings = DAYS.reduce<Record<string, string>>((acc, d) => {
+    const shifts = schedule.map(emp => emp.shifts[d] ?? 'Day Off')
+    const hasMorning = shifts.some(s => s === 'Morning')
+    const hasEvening = shifts.some(s => s === 'Evening')
+    if (!hasMorning && !hasEvening) acc[d] = 'no staff'
+    else if (!hasMorning)           acc[d] = 'no morning'
+    else if (!hasEvening)           acc[d] = 'no evening'
+    return acc
+  }, {})
+  const canApprove = Object.keys(dayWarnings).length === 0
 
   const formatWeekRange = (start: string) => {
     const s = new Date(start)
@@ -76,9 +76,9 @@ export default function WorkforcePage() {
     if (isLive) {
       const token = await getToken()
       await fetch(`${API_BASE}/workforce/approve`, {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ week_start: weekStart, schedule: data.schedule }),
+        body:    JSON.stringify({ week_start: weekStart, schedule }),
       }).catch(() => {})
     }
     setApproved(true)
@@ -90,17 +90,11 @@ export default function WorkforcePage() {
         <div className="flex items-center gap-3">
           <div>
             <h1 className="text-2xl font-semibold text-white">Workforce Management</h1>
-            <p className="text-sm mt-1" style={{ color: '#8899BB' }}>AI-generated weekly schedule</p>
+            <p className="text-sm mt-1" style={{ color: '#8899BB' }}>AI-generated weekly schedule · click any shift to adjust</p>
           </div>
-          {isLive === null && (
-            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-400">● Loading</span>
-          )}
-          {isLive === true && (
-            <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ background: '#052e16', color: '#10B981' }}>● Live</span>
-          )}
-          {isLive === false && (
-            <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ background: '#1A2A40', color: '#8899BB' }}>● Mock</span>
-          )}
+          {isLive === null  && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-400">● Loading</span>}
+          {isLive === true  && <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ background: '#052e16', color: '#10B981' }}>● Live</span>}
+          {isLive === false && <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ background: '#1A2A40', color: '#8899BB' }}>● Mock</span>}
         </div>
         <div className="flex items-center gap-3">
           <button onClick={prevWeek} className="px-3 py-1.5 rounded-lg text-white" style={{ background: '#1A2A40' }}>←</button>
@@ -115,11 +109,17 @@ export default function WorkforcePage() {
           <thead>
             <tr style={{ borderBottom: '1px solid #1A2A40' }}>
               <th className="text-left px-4 py-3" style={{ color: '#8899BB' }}>Employee</th>
-              {DAYS.map(d => <th key={d} className="px-4 py-3 text-center" style={{ color: '#8899BB' }}>{d}</th>)}
+              {DAYS.map(d => (
+                <th key={d} className="px-4 py-3 text-center font-semibold"
+                  style={{ color: dayWarnings[d] ? '#EF4444' : '#8899BB' }}>
+                  {d}
+                  {dayWarnings[d] && <div className="text-xs font-normal">{dayWarnings[d]}</div>}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {data.schedule.map(emp => (
+            {schedule.map(emp => (
               <tr key={emp.staff_id} style={{ borderBottom: '1px solid #1A2A40' }}>
                 <td className="px-4 py-3">
                   <div className="text-white font-medium">{emp.name}</div>
@@ -127,7 +127,10 @@ export default function WorkforcePage() {
                 </td>
                 {DAYS.map(d => (
                   <td key={d} className="px-4 py-3 text-center">
-                    <ShiftChip value={emp.shifts[d as keyof typeof emp.shifts] ?? 'Day Off'} />
+                    <ShiftChip
+                      value={emp.shifts[d] ?? 'Day Off'}
+                      onClick={() => cycleShift(emp.staff_id, d)}
+                    />
                   </td>
                 ))}
               </tr>
@@ -136,7 +139,7 @@ export default function WorkforcePage() {
               <td className="px-4 py-3 text-xs font-semibold" style={{ color: '#3B82F6' }}>Predicted Customers</td>
               {DAYS.map(d => (
                 <td key={d} className="px-4 py-3 text-center text-white font-medium text-xs">
-                  {data.predicted_customers[d as keyof typeof data.predicted_customers]}
+                  {data.predicted_customers[d]}
                 </td>
               ))}
             </tr>
@@ -162,9 +165,14 @@ export default function WorkforcePage() {
         </div>
       </div>
 
-      <div className="flex justify-end">
-        <button onClick={approveSchedule} disabled={approved}
-          className="px-6 py-3 rounded-lg font-semibold text-white disabled:opacity-60 transition-colors"
+      <div className="flex items-center justify-end gap-4">
+        {!canApprove && (
+          <p className="text-sm" style={{ color: '#EF4444' }}>
+            {Object.entries(dayWarnings).map(([d, w]) => `${d}: ${w}`).join(' · ')}
+          </p>
+        )}
+        <button onClick={approveSchedule} disabled={approved || !canApprove}
+          className="px-6 py-3 rounded-lg font-semibold text-white disabled:opacity-40 transition-colors"
           style={{ background: approved ? '#10B981' : '#3B82F6' }}>
           {approved ? '✓ Schedule Approved' : 'Approve Schedule'}
         </button>
