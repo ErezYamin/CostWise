@@ -42,12 +42,18 @@ def seed_staff():
 def seed_inventory():
     table = dynamodb.Table('InventoryItem')
     items = [
-        {'item_id': 'item-001', 'branch_id': 'branch-001', 'name': 'Tomatoes',    'current_stock': Decimal('8'),  'unit': 'kg'},
-        {'item_id': 'item-002', 'branch_id': 'branch-001', 'name': 'Beef',        'current_stock': Decimal('15'), 'unit': 'kg'},
-        {'item_id': 'item-003', 'branch_id': 'branch-001', 'name': 'Cheese',      'current_stock': Decimal('10'), 'unit': 'kg'},
-        {'item_id': 'item-004', 'branch_id': 'branch-001', 'name': 'Lettuce',     'current_stock': Decimal('6'),  'unit': 'kg'},
-        {'item_id': 'item-005', 'branch_id': 'branch-001', 'name': 'Pizza Dough', 'current_stock': Decimal('20'), 'unit': 'kg'},
-        {'item_id': 'item-006', 'branch_id': 'branch-001', 'name': 'Potatoes',    'current_stock': Decimal('25'), 'unit': 'kg'},
+        {'item_id': 'item-001', 'branch_id': 'branch-001', 'name': 'Tomatoes', 'current_stock':
+            Decimal('8'), 'unit': 'kg', 'price_per_unit': Decimal('2.0'), 'min_stock': Decimal('4.0')},
+        {'item_id': 'item-002', 'branch_id': 'branch-001', 'name': 'Beef', 'current_stock':
+            Decimal('15'), 'unit': 'kg', 'price_per_unit': Decimal('8.0'), 'min_stock': Decimal('5.0')},
+        {'item_id': 'item-003', 'branch_id': 'branch-001', 'name': 'Cheese', 'current_stock':
+            Decimal('10'), 'unit': 'kg', 'price_per_unit': Decimal('4.0'), 'min_stock': Decimal('3.0')},
+        {'item_id': 'item-004', 'branch_id': 'branch-001', 'name': 'Lettuce', 'current_stock':
+            Decimal('6'), 'unit': 'kg', 'price_per_unit': Decimal('1.5'), 'min_stock': Decimal('2.0')},
+        {'item_id': 'item-005', 'branch_id': 'branch-001', 'name': 'Pizza Dough', 'current_stock':
+            Decimal('20'), 'unit': 'kg', 'price_per_unit': Decimal('2.0'), 'min_stock': Decimal('6.0')},
+        {'item_id': 'item-006', 'branch_id': 'branch-001', 'name': 'Potatoes', 'current_stock':
+            Decimal('25'), 'unit': 'kg', 'price_per_unit': Decimal('1.0'), 'min_stock': Decimal('5.0')},
     ]
     for item in items:
         table.put_item(Item=item)
