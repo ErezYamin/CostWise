@@ -8,12 +8,15 @@ export interface DashboardData {
   avg_order_value: number;
   active_employees: number;
   weekly_revenue: { day: string; amount: number }[];
+  popular_dishes: { name: string; count: number }[];
+  trends: { revenue: number; orders: number; avg_order_value: number };
 }
 
 export function useDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     async function load() {
       try {
