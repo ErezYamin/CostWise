@@ -157,6 +157,99 @@ def seed_forecasts():
 
 
 # ─────────────────────────────────────────────
+# 7. TODAY'S SALES (fresh data for today)
+# ─────────────────────────────────────────────
+def seed_today_sales():
+    table = dynamodb.Table('SalesRecord')
+    today = datetime.utcnow().date()
+    current_hour = datetime.utcnow().hour
+
+    total = 0
+    with table.batch_writer() as batch:
+        for _ in range(random.randint(65, 80)):
+            hour = random.randint(11, min(current_hour, 22))
+            minute = random.randint(0, 59)
+            time_and_date = f"{today}T{hour:02d}:{minute:02d}:00"
+            batch.put_item(Item={
+                'branch_id':     'branch-001',
+                'sale_id':       f'sale-today-{uuid.uuid4()}',
+                'time_and_date': time_and_date,
+                'dish':          random.choice(DISHES),
+                'total_amount':  Decimal(str(round(random.uniform(8, 45), 2))),
+                'weather':       random.choice(WEATHER),
+                'covers':        random.randint(1, 4),
+            })
+            total += 1
+
+    print(f'✓ Today\'s sales seeded ({total} records)')
+
+
+# ─────────────────────────────────────────────
+# 8. THIS WEEK'S SALES (Mon–yesterday)
+# ─────────────────────────────────────────────
+def seed_this_week_sales():
+    table = dynamodb.Table('SalesRecord')
+    today = datetime.utcnow().date()
+    days_since_monday = today.weekday()  # 0=Mon
+
+    total = 0
+    with table.batch_writer() as batch:
+        for day_offset in range(1, days_since_monday + 1):  # Mon to yesterday
+            current_date = today - timedelta(days=day_offset)
+            weekday = current_date.weekday()
+            num_sales = get_daily_sales_count(weekday)
+            weather = random.choice(WEATHER)
+
+            for _ in range(num_sales):
+                hour = random.randint(11, 22)
+                minute = random.randint(0, 59)
+                time_and_date = f"{current_date}T{hour:02d}:{minute:02d}:00"
+                batch.put_item(Item={
+                    'branch_id':     'branch-001',
+                    'sale_id':       f'sale-week-{uuid.uuid4()}',
+                    'time_and_date': time_and_date,
+                    'dish':          random.choice(DISHES),
+                    'total_amount':  Decimal(str(round(random.uniform(8, 45), 2))),
+                    'weather':       weather,
+                    'covers':        random.randint(1, 4),
+                })
+                total += 1
+
+    print(f'✓ This week\'s sales seeded ({total} records across {days_since_monday} days)')
+
+
+# ─────────────────────────────────────────────
+# 9. PENDING ORDERS (for get_pending_orders)
+# ─────────────────────────────────────────────
+PENDING_ITEMS = [
+    ('Tomatoes', 50),
+    ('Cheese', 30),
+    ('Lettuce', 40),
+    ('Beef', 20),
+    ('Pizza Dough', 60),
+]
+
+def seed_pending_orders():
+    table = dynamodb.Table('Forecast')
+    total = 0
+
+    with table.batch_writer() as batch:
+        for item_name, predicted_qty in PENDING_ITEMS:
+            batch.put_item(Item={
+                'branch_id':        'branch-001',
+                'forecast_id':      f'order-{uuid.uuid4()}',
+                'forecast_type':    'inventory',
+                'item_name':        item_name,
+                'status':           'pending',
+                'predicted_value':  Decimal(str(predicted_qty)),
+                'confidence_score': Decimal(str(round(random.uniform(0.80, 0.95), 2))),
+            })
+            total += 1
+
+    print(f'✓ Pending orders seeded ({total} items)')
+
+
+# ─────────────────────────────────────────────
 # RUN ALL
 # ─────────────────────────────────────────────
 if __name__ == '__main__':
@@ -167,4 +260,7 @@ if __name__ == '__main__':
     seed_sales()
     seed_shifts()
     seed_forecasts()
+    seed_today_sales()
+    seed_this_week_sales()
+    seed_pending_orders()
     print('\nDone. All tables seeded successfully.')
