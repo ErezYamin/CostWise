@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.env
+
+# Lambda build artifacts
+**/function.zip
+backend/functions/chatbot-assistant/openai/
+backend/functions/chatbot-assistant/openai-*.dist-info/
+backend/functions/chatbot-assistant/pydantic/
+backend/functions/chatbot-assistant/pydantic_core/
+backend/functions/chatbot-assistant/pydantic*.dist-info/
+backend/functions/chatbot-assistant/httpx/
+backend/functions/chatbot-assistant/httpx-*.dist-info/
+backend/functions/chatbot-assistant/httpcore/
+backend/functions/chatbot-assistant/httpcore-*.dist-info/
+backend/functions/chatbot-assistant/anyio/
+backend/functions/chatbot-assistant/anyio-*.dist-info/
+backend/functions/chatbot-assistant/certifi/
+backend/functions/chatbot-assistant/certifi-*.dist-info/
+backend/functions/chatbot-assistant/idna/
+backend/functions/chatbot-assistant/idna-*.dist-info/
+backend/functions/chatbot-assistant/h11/
+backend/functions/chatbot-assistant/h11-*.dist-info/
+backend/functions/chatbot-assistant/sniffio/
+backend/functions/chatbot-assistant/sniffio-*.dist-info/
+backend/functions/chatbot-assistant/annotated_types/
+backend/functions/chatbot-assistant/annotated_types-*.dist-info/
+backend/functions/chatbot-assistant/typing_inspection/
+backend/functions/chatbot-assistant/typing_inspection-*.dist-info/
+backend/functions/chatbot-assistant/typing_extensions.py
+backend/functions/chatbot-assistant/typing_extensions-*.dist-info/
+backend/functions/chatbot-assistant/jiter/
+backend/functions/chatbot-assistant/jiter-*.dist-info/
+backend/functions/chatbot-assistant/tqdm/
+backend/functions/chatbot-assistant/tqdm-*.dist-info/
+backend/functions/chatbot-assistant/distro/
+backend/functions/chatbot-assistant/distro-*.dist-info/
+backend/functions/chatbot-assistant/bin/
+
+# Node
+node_modules/
+frontend/node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
