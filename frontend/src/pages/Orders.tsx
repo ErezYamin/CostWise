@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { Package, DollarSign, Clock } from "lucide-react"
 import PageHeader from "../components/ui/PageHeader"
 import KpiCard from "../components/ui/KpiCard"
+import { OrdersSkeleton } from "../components/ui/Skeleton"
 import { API_BASE } from "../config"
 import { getToken } from "../lib/auth"
 
@@ -84,7 +85,7 @@ export default function OrdersPage() {
   const estimatedCost = orders.reduce((sum, o) => sum + o.cost, 0)
   const pendingCount = orders.filter(o => o.status === "pending").length
 
-  if (loading) return <div style={{ color: "#EFF6FF", padding: 32 }}>Loading...</div>
+  if (loading) return <OrdersSkeleton />
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>

@@ -334,7 +334,7 @@ def lambda_handler(event, context):
 
         for _ in range(5):
             response = client.chat.completions.create(
-                model="gpt-5-nano",
+                model="gpt-4.1-mini",
                 messages=messages,
                 tools=TOOL_DEFINITIONS,
                 tool_choice="auto",
