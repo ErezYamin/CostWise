@@ -39,7 +39,7 @@ def get_last_week_sales():
             
             if orders_count > 0:
                 total_revenue = sum(float(item.get('total_amount', 0)) for item in items)
-                day_weather = items[0].get('weather_during_sale' 'Unknown')
+                day_weather = items[0].get('weather_during_sale', 'Unknown')
             else:
                 total_revenue = 0.0
                 day_weather = "Unknown"
