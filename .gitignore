@@ -6,6 +6,7 @@ __pycache__/
 .Python
 *.egg-info/
 .env
+.env.local
 
 # Lambda build artifacts
 **/function.zip
@@ -52,3 +53,4 @@ frontend/node_modules/
 
 # OS
 .DS_Store
+**/.DS_Store
