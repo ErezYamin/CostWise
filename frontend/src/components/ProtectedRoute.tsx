@@ -9,7 +9,7 @@ export default function ProtectedRoute({
 }) {
   type userLoggedInState = "loading" | "auth" | "unauth";
   const [userLoggedIn, setUserLoggedIn] =
-    useState<userLoggedInState>("loading");
+    useState<userLoggedInState>("auth");
   useEffect(() => {
     getCurrentUser()
       .then(() => setUserLoggedIn("auth"))
