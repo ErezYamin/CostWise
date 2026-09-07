@@ -157,6 +157,10 @@ def lambda_handler(event, context):
         1. Output ONLY a valid JSON object. No markdown, no explanations.
         2. Assign more staff on busy days (holidays, sports events) and less on rainy days.
         3. Shift options for each day MUST be exactly one of: "Morning", "Evening", or "Day Off".
+        4. Every day from Sun to Sat is an operating day.
+        5. Every day MUST have at least one staff member assigned to "Morning".
+        6. Every day MUST have at least one staff member assigned to "Evening".
+        7. Do not leave any day without both Morning and Evening coverage.
         
         REQUIRED JSON FORMAT:
         {{
@@ -218,8 +222,3 @@ def lambda_handler(event, context):
         }
 
 
-if __name__ == "__main__":
-    print("Asking AI to build the perfect schedule JSON...")
-    test_response = lambda_handler({}, None)
-    print("\n✅ Final JSON returned to the Frontend:\n")
-    print(test_response['body'])

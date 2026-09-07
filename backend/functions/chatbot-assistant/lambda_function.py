@@ -25,6 +25,17 @@ def decimal_default(obj):
 
 
 def today_str():
+    # Use the most recent date that actually has sales data (seeded data may not include today)
+    response = sales_table.query(
+        IndexName="by-date",
+        KeyConditionExpression=Key("branch_id").eq(BRANCH_ID),
+        ScanIndexForward=False,
+        Limit=1,
+        ProjectionExpression="time_and_date",
+    )
+    items = response.get("Items", [])
+    if items:
+        return items[0]["time_and_date"][:10]
     return datetime.utcnow().strftime("%Y-%m-%d")
 
 
